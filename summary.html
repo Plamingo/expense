@@ -282,8 +282,8 @@
           <div>
             <label class="block font-bold text-slate-600 mb-1">이동수단 선택</label>
             <select id="inputTravelMode" onchange="handleTravelModeChange()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="대중교통">대중교통</option>
-              <option value="자가차량" selected>자가차량</option>
+              <option value="대중교통" selected>대중교통</option>
+              <option value="자가차량">자가차량</option>
             </select>
           </div>
           <div id="fieldFuel">
@@ -348,15 +348,15 @@
             </div>
           </div>
 
-          <div>
+          <div id="fieldToll">
             <label class="block font-bold text-slate-600 mb-1">통행료 (원)</label>
             <input type="number" id="inputToll" min="0" step="any" value="0" oninput="updateDialogCalculations()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
-          <div>
+          <div id="fieldParking">
             <label class="block font-bold text-slate-600 mb-1">주차비 (원)</label>
             <input type="number" id="inputParking" min="0" step="any" value="0" oninput="updateDialogCalculations()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
-          <div>
+          <div id="fieldTransit">
             <label class="block font-bold text-slate-600 mb-1">대중교통비 (원)</label>
             <input type="number" id="inputTransit" min="0" step="any" value="0" oninput="updateDialogCalculations()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
@@ -2148,7 +2148,7 @@ async function submitFiles(ts, label) {
           document.getElementById('inputDirect').value = d.direct || '일반 복귀';
           document.getElementById('inputPeople').value = d.people || '';
 
-          document.getElementById('inputTravelMode').value = d.travelMode || '자가차량';
+          document.getElementById('inputTravelMode').value = d.travelMode || '대중교통';
           document.getElementById('inputFuel').value = d.fuel || '휘발유';
           document.getElementById('inputKm').value = d.km || 0;
           document.getElementById('inputEff').value = d.eff || '';
@@ -2174,7 +2174,7 @@ async function submitFiles(ts, label) {
         document.getElementById('inputStart').value = '';
         document.getElementById('inputDest').value = '';
         document.getElementById('inputPurpose').value = '';
-        document.getElementById('inputTravelMode').value = '자가차량';
+        document.getElementById('inputTravelMode').value = '대중교통';
         document.getElementById('inputKm').value = '0';
         document.getElementById('inputMeal').value = '10000';
         document.getElementById('inputCount').value = '1';
@@ -2202,10 +2202,14 @@ async function submitFiles(ts, label) {
       const mode = document.getElementById('inputTravelMode').value;
       const isPublic = mode === '대중교통';
       document.getElementById('fieldFuel').style.display = isPublic ? 'none' : 'block';
-      document.getElementById('fieldKm').style.display = 'block';
+      document.getElementById('fieldKm').style.display = isPublic ? 'none' : 'block';
       document.getElementById('fieldEff').style.display = isPublic ? 'none' : 'block';
       document.getElementById('fieldPrice').style.display = isPublic ? 'none' : 'block';
       document.getElementById('fieldFuelCalcResult').style.display = isPublic ? 'none' : 'flex';
+      // 대중교통 선택 시 통행료, 주차비 필드 숨김 처리 / 대중교통비는 노출
+      document.getElementById('fieldToll').style.display = isPublic ? 'none' : 'block';
+      document.getElementById('fieldParking').style.display = isPublic ? 'none' : 'block';
+      document.getElementById('fieldTransit').style.display = isPublic ? 'block' : 'none';
       window.updateDialogCalculations();
     };
 
@@ -2230,9 +2234,9 @@ async function submitFiles(ts, label) {
       const dinnerClaim = Math.min(dinner, cap);
       const mealClaimTotal = lunchClaim + dinnerClaim;
 
-      const toll = +document.getElementById('inputToll').value || 0;
-      const parking = +document.getElementById('inputParking').value || 0;
-      const transit = +document.getElementById('inputTransit').value || 0;
+      const toll = isPublic ? 0 : (+document.getElementById('inputToll').value || 0);
+      const parking = isPublic ? 0 : (+document.getElementById('inputParking').value || 0);
+      const transit = isPublic ? (+document.getElementById('inputTransit').value || 0) : 0;
       const grandTotal = fuel + mealClaimTotal + toll + parking + transit;
 
       document.getElementById('textFuelCalc').textContent = `${fmt(fuel)} 원`;
@@ -2363,10 +2367,10 @@ async function submitFiles(ts, label) {
         meal: document.getElementById('inputMeal').value || '0',
         dinnerEnabled: document.getElementById('inputDinnerEnabled').checked,
         dinner: document.getElementById('inputDinner').value || '0',
-        toll: document.getElementById('inputToll').value || '0',
-        tollproof: document.getElementById('inputToll').value || '0',
-        parking: document.getElementById('inputParking').value || '0',
-        transit: document.getElementById('inputTransit').value || '0',
+        toll: (document.getElementById('inputTravelMode').value === '대중교통') ? '0' : (document.getElementById('inputToll').value || '0'),
+        tollproof: (document.getElementById('inputTravelMode').value === '대중교통') ? '0' : (document.getElementById('inputToll').value || '0'),
+        parking: (document.getElementById('inputTravelMode').value === '대중교통') ? '0' : (document.getElementById('inputParking').value || '0'),
+        transit: (document.getElementById('inputTravelMode').value === '대중교통') ? (document.getElementById('inputTransit').value || '0') : '0',
         original: '준비 완료',
         memo: document.getElementById('inputMemo').value.trim(),
         visits: [{ name: document.getElementById('inputDest').value.trim(), purpose: document.getElementById('inputPurpose').value.trim() }],
